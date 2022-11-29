@@ -12,6 +12,18 @@ import java.util.stream.Stream;
 //@SuppressWarnings("ALL")
 public class TestStream {
     public static void main(String[] args) {
+        /**
+         * 1. 创建流
+         * 2. 中间操作
+         * 3. 终结操作
+         */
+        HashMap<String, Integer> hashMap = new HashMap<>();
+        hashMap.put("tom", 12);
+        hashMap.put("jack", 16);
+        Set<Map.Entry<String, Integer>> entrySet = hashMap.entrySet();
+        Stream<Map.Entry<String, Integer>> stream = entrySet.stream();
+        stream.filter(entry -> entry.getValue() > 12)
+                .forEach(entry -> System.out.println(entry.getKey() + "---" + entry.getValue()));
 
         List<Author> authors = getAuthors();
 
