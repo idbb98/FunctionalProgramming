@@ -17,36 +17,168 @@ public class TestStream {
          * 2. 中间操作
          * 3. 终结操作
          */
-        HashMap<String, Integer> hashMap = new HashMap<>();
-        hashMap.put("tom", 12);
-        hashMap.put("jack", 16);
-        Set<Map.Entry<String, Integer>> entrySet = hashMap.entrySet();
-        Stream<Map.Entry<String, Integer>> stream = entrySet.stream();
-        stream.filter(entry -> entry.getValue() > 12)
-                .forEach(entry -> System.out.println(entry.getKey() + "---" + entry.getValue()));
+//        HashMap<String, Integer> hashMap = new HashMap<>();
+//        hashMap.put("tom", 12);
+//        hashMap.put("jack", 16);
+//        Set<Map.Entry<String, Integer>> entrySet = hashMap.entrySet();
+//        Stream<Map.Entry<String, Integer>> stream = entrySet.stream();
+//        stream.filter(entry -> entry.getValue() > 12)
+//                .forEach(entry -> System.out.println(entry.getKey() + "---" + entry.getValue()));
 
         List<Author> authors = getAuthors();
-
-        // 1.年龄小于18岁的作家名字并且去重
-        authors.stream()    //集合转成流
-                .distinct() //去重 equals hash
-                .filter(new Predicate<Author>() {
+        // 打印现有数据的所有分类，要求对分类去重，不能出现格式：哲学，爱情
+        authors.stream()
+                .flatMap(author -> {
+                    return author.getBookList().stream();
+                })
+                .distinct()         // 书籍去重
+                //"哲学，爱情" =》"哲学“ ”爱情"       数组创建流Arrays.stream()
+                .flatMap(new Function<Book, Stream<String>>() {
                     @Override
-                    public boolean test(Author author) {
-                        return author.getAge() < 18;
+                    public Stream<String> apply(Book book) {
+                        return Arrays.stream(book.getCategory().split(","));    // 数组创建流Arrays.stream()
                     }
                 })
-                .forEach(new Consumer<Author>() {
-                    @Override
-                    public void accept(Author author) {
-                        System.out.println(author.getName());
-                    }
-                });
+                .distinct()         // 分类去重
+                .forEach(category -> System.out.println(category));
 
         authors.stream()
-                .distinct()
-                .filter(author -> author.getAge() < 18)
-                .forEach(author -> System.out.println(author.getName()));
+                .flatMap(author -> author.getBookList().stream())
+                .distinct()         // 书籍去重
+                //"哲学，爱情" =》"哲学“ ”爱情"       数组创建流Arrays.stream()
+                .flatMap(book -> Arrays.stream(book.getCategory().split(",")))
+                .distinct()         // 分类去重
+                .forEach(category -> System.out.println(category));
+
+
+
+//        // 打印书籍名字，去重
+//        authors.stream()
+//                .flatMap(new Function<Author, Stream<Book>>() {     // 转成Stream<Book>
+//                    @Override
+//                    public Stream<Book> apply(Author author) {
+//                        return author.getBookList().stream();
+//                    }
+//                })
+//                .distinct()
+//                .forEach(new Consumer<Book>() {
+//                    @Override
+//                    public void accept(Book book) {
+//                        System.out.println(book.getName());
+//                    }
+//                });
+//        // lambda
+//        authors.stream()
+//                .flatMap(author -> author.getBookList().stream())       // 转成Stream<Book>
+//                .distinct()
+//                .forEach(book -> System.out.println(book.getName()));
+
+        // 打印除了年龄最大的作家外的其他作家，并且不能重复，按年龄降序
+//        authors.stream()
+//                .distinct()
+//                .sorted(((o1, o2) -> o2.getAge() - o1.getAge()))
+//                .skip(1)
+//                .forEach(author -> System.out.println(author));
+
+        // 对流中元素按年龄降序，并且不能重复，打印年龄最大的俩个作家名字
+//        authors.stream()
+//                .distinct()
+//                .sorted(((o1, o2) -> o2.getAge() - o1.getAge()))
+//                .limit(2)
+//                .forEach(author -> System.out.println(author.getName()));
+
+
+        //按年龄排序，不能重复
+        // 1. 空参sorted()方法
+//        authors.stream()
+//                .distinct()
+//                // 此方式需要Author类implements Comparable重写compareTo方法，否则报ClassCastException
+//                // 实现降序或升序依赖compareTo方法
+//                .sorted()
+//                .forEach(author -> System.out.println(author.getAge()));
+//        // 2. 有参sorted()方法
+//        authors.stream()
+//                .distinct()
+//                .sorted(new Comparator<Author>() {
+//                    @Override
+//                    public int compare(Author o1, Author o2) {
+//                        return o1.getAge() - o2.getAge();
+//                    }
+//                })
+//                .forEach(author -> System.out.println(author.getAge()));
+//
+//        authors.stream()
+//                .distinct()
+//                .sorted((o1, o2) -> o1.getAge() - o2.getAge())
+//                .forEach(author -> System.out.println(author.getAge()));
+
+        //打印所以作家姓名,去重(只判断名字)
+//        authors.stream()
+//                .map(author -> author.getName())
+//                .distinct()
+//                .forEach(name -> System.out.println(name));
+
+//        authors.stream()
+//                .map(new Function<Author, String>() {   //Author类型转成String
+//                    @Override
+//                    public String apply(Author author) {
+//                        return author.getName();
+//                    }
+//                })
+//                .forEach(new Consumer<String>() {
+//                    @Override
+//                    public void accept(String s) {
+//                        System.out.println(s);
+//                    }
+//                });
+//        authors.stream()
+//                .map( author -> author.getName())       //Author类型转成String
+//                .forEach(s -> System.out.println(s));
+//
+//        authors.stream()
+//                .map(author -> author.getAge())
+//                .map(age -> age+10)
+//                .forEach(age -> System.out.println(age));
+//        //打印姓名长度大于1的作家姓名
+//        authors.stream()
+//                .filter(new Predicate<Author>() {
+//                    @Override
+//                    public boolean test(Author author) {
+//                        return author.getName().length() > 1;
+//                    }
+//                })
+//                .forEach(new Consumer<Author>() {
+//                    @Override
+//                    public void accept(Author author) {
+//                        System.out.println(author.getName());
+//                    }
+//                });
+//
+//        authors.stream()
+//                .filter(author -> author.getName().length()>1)
+//                .forEach(author -> System.out.println(author.getName()));
+
+
+        // 1.年龄小于18岁的作家名字并且去重
+//        authors.stream()    //集合转成流
+//                .distinct() //去重 equals hash
+//                .filter(new Predicate<Author>() {
+//                    @Override
+//                    public boolean test(Author author) {
+//                        return author.getAge() < 18;
+//                    }
+//                })
+//                .forEach(new Consumer<Author>() {
+//                    @Override
+//                    public void accept(Author author) {
+//                        System.out.println(author.getName());
+//                    }
+//                });
+
+//        authors.stream()
+//                .distinct()
+//                .filter(author -> author.getAge() < 18)
+//                .forEach(author -> System.out.println(author.getName()));
 
 
         // 2.简化写法
