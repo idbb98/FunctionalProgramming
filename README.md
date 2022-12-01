@@ -1,8 +1,7 @@
-# 函数式编程 stream流
+# 函数式编程
 ## 1.lambda表达式
 ### 1.1 概述
-- lambda是JDK8中的一个语法糖，可
-  以对某些匿名内部类的写法进行优化，让函数式编程只关注数据而不是对象。
+- lambda是JDK8中的一个语法糖，可以对某些匿名内部类的写法进行优化，让函数式编程只关注数据而不是对象。
 - 基本格式：(参数列表)->{代码}
 
 ## 2. stream流
@@ -19,18 +18,21 @@
 ### 2.3 常用操作
 
 #### 2.3.1 创建流
-单列集合: 集合对象.stream()
+##### 单列集合:
+集合对象.stream()
 ```java
 List<Author> authors = getAuthors();
 Stream<Author> stream = authors.stream();
 ```
-数组: Arrays.stream(arr) / Stream.of(arr)
+##### 数组:
+Arrays.stream(arr) / Stream.of(arr)
 ```java 
 Integer[] arr = {1,2,3,4,5};
 Stream<Integer> stream = Arrays.stream(arr);
 Stream<Integer> stream2 = Stream.of(arr);
 ```
-双列集合: 
+##### 双列集合:
+转成entrySet
 ```java
 HashMap<String, Integer> hashMap = new HashMap<>();
 hashMap.put("tom",12);
@@ -57,7 +59,7 @@ stream.filter(entry -> entry.getValue() > 12)
 ```
 
 #### 2.3.2 中间操作
-- filter
+##### filter
 ```java
 List<Author> authors = getAuthors();
 //打印姓名长度大于1的作家姓名
@@ -80,7 +82,7 @@ authors.stream()
         .forEach(author -> System.out.println(author.getName()));
 ```
 
-- map
+##### map
 对流中的数据进行计算或转换
 ```java
 List<Author> authors = getAuthors();
@@ -108,18 +110,19 @@ authors.stream()
         .forEach(age -> System.out.println(age));
 ```
 
-- distinct 
+##### distinct
 依赖Object的equals方法（直接==判断）,一般要重写equals方法
 ```java
 List<Author> authors = getAuthors();
-//打印所以作家姓名,去重(只判断名字)
+//打印所有作家姓名,去重(只判断名字)
 authors.stream()
         .map(author -> author.getName())
         .distinct()
         .forEach(name -> System.out.println(name));
 ```
 
-- sorted
+##### sorted
+1. 空参sorted()方法
 ```java
 List<Author> authors = getAuthors();
 //按年龄排序，不能重复
@@ -130,6 +133,30 @@ authors.stream()
         // 实现降序或升序依赖compareTo方法
         .sorted()
         .forEach(author -> System.out.println(author.getAge()));
+```
+- Author.java
+```java
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+public class Author implements Comparable<Author>{
+    private Long id;
+    private String name;
+    private String introduction;
+    private Integer age;
+    private List<Book> bookList;
+
+    @Override
+    public int compareTo(Author o) {
+        return this.getAge()-o.getAge();        //更换前后位置实现降序或升序
+    }
+}
+```
+2. 有参sorted()方法
+```java
+List<Author> authors = getAuthors();
+//按年龄排序，不能重复
 // 2. 有参sorted()方法
 authors.stream()
         .distinct()
@@ -147,7 +174,7 @@ authors.stream()
         .forEach(author -> System.out.println(author.getAge()));
 ```
 
-- limit 
+##### limit
 设置流的最大长度，超出部分将被抛弃
 ```java
 List<Author> authors = getAuthors();
@@ -159,7 +186,7 @@ authors.stream()
         .forEach(author -> System.out.println(author.getName()));
 ```
 
-- skip 
+##### skip
 跳过流中的前n个元素，返回剩下的元素
 ```java
 List<Author> authors = getAuthors();
@@ -171,8 +198,9 @@ authors.stream()
         .forEach(author -> System.out.println(author));
 ```
 
-- flatMap
+##### flatMap
 map能把一个对象转换成另外一个对象来作为流中的元素，而flatMap可以把一个对象转换成多个对象作为流中的元素
+- EX01
 ```java
 List<Author> authors = getAuthors();
 // 打印书籍名字，去重
@@ -197,6 +225,7 @@ authors.stream()
         .forEach(book -> System.out.println(book.getName()));
 ```
 
+- EX02
 ```java
 List<Author> authors = getAuthors();
 // 打印现有数据的所有分类，要求对分类去重，不能出现格式：哲学，爱情
@@ -205,7 +234,7 @@ authors.stream()
             return author.getBookList().stream();
         })
         .distinct()         // 书籍去重
-        //"哲学，爱情" =》"哲学“ ”爱情"       数组创建流Arrays.stream()
+        //"哲学，爱情" =》"哲学","爱情"       数组创建流Arrays.stream()
         .flatMap(new Function<Book, Stream<String>>() {
             @Override
             public Stream<String> apply(Book book) {
@@ -218,14 +247,254 @@ authors.stream()
 authors.stream()
         .flatMap(author -> author.getBookList().stream())
         .distinct()         // 书籍去重
-        //"哲学，爱情" =》"哲学“ ”爱情"       数组创建流Arrays.stream()
+        //"哲学，爱情" =》""哲学","爱情"         数组创建流Arrays.stream()
         .flatMap(book -> Arrays.stream(book.getCategory().split(",")))
         .distinct()         // 分类去重
         .forEach(category -> System.out.println(category));
 ```
 
+#### 2.3.3 终结操作
+##### forEach
+遍历所有元素
+```java
+List<Author> authors = getAuthors();
+// 打印所有作家名字
+authors.stream()
+        .map(author -> author.getName())
+        .distinct()
+        .forEach(name -> System.out.println(name));
+```
 
-#### 2.3.2 常用方法说明 TestStream
+##### count
+计算元素数量
+```java
+List<Author> authors = getAuthors();
+// 打印作这些家所有书籍的数目，去重
+long count = authors.stream()
+        // 一位作家多本数据，（一对多）使用 flatMap
+        .flatMap(author -> author.getBookList().stream())
+        .distinct()
+        .count();   // 返回long类型，需要接收
+System.out.println(count);
+```
+
+##### min&max
+返回的是option对象，这里和sorted一样，得指定比较规则
+```java
+List<Author> authors = getAuthors();
+// 打印作家的书籍最高分和最低分
+// Stream<Author> -> Stream<Book> -> Stream<Double> -> 求值
+Optional<Double> max = authors.stream()
+        .flatMap(author -> author.getBookList().stream())
+        .map(book -> book.getScore())
+        .max(new Comparator<Double>() {
+            @Override
+            public int compare(Double o1, Double o2) {
+                return (int) (o1 - o2);
+            }
+        });
+
+// lambda
+Optional<Double> max1 = authors.stream()
+        .flatMap(author -> author.getBookList().stream())
+        .map(book -> book.getScore())
+        .max((o1, o2) -> (int) (o1 - o2));
+
+//最低分
+Optional<Double> min = authors.stream()
+        .flatMap(author -> author.getBookList().stream())
+        .map(book -> book.getScore())
+        .min((o1, o2) -> (int) (o1 - o2));
+
+```
+
+##### collect
+把当前流转换成一个集合（list, set, map）
+- Collectors.toList()
+- Collectors.toSet()
+- Collectors.toMap(key, value)
+
+```java
+List<Author> authors = getAuthors();
+// 获取存放作者名字的集合
+List<String> nameList = authors.stream()
+        .map(author -> author.getName())
+        .collect(Collectors.toList());
+System.out.println(nameList);
+```
+
+```java
+List<Author> authors = getAuthors();
+// 书名的set集合
+Set<String> stringSet = authors.stream()
+        .flatMap(author -> author.getBookList().stream())
+        .map(book -> book.getName())
+        .collect(Collectors.toSet());
+System.out.println(stringSet);
+```
+
+```java
+List<Author> authors = getAuthors();
+// 获取一个 map集合，map集合的 key为作者名，value为 List<Book>
+Map<String, List<Book>> map = authors.stream()
+        .distinct() // 不去重，key有重复时报 IllegalStateException Duplicate key
+        .collect(Collectors.toMap(new Function<Author, String>() {
+            @Override
+            public String apply(Author author) {
+                return author.getName();
+            }
+        }, new Function<Author, List<Book>>() {
+            @Override
+            public List<Book> apply(Author author) {
+                return author.getBookList();
+            }
+        }));
+map.forEach((key,value) -> System.out.println("key:"+key+"  value:"+value));
+```
+
+##### anyMatch
+可以用来判断是否有任意符合匹配条件的元素，结果为boolean类型
+```java
+List<Author> authors = getAuthors();
+// 判断是否有年龄大于30的作家
+boolean anyMatch = authors.stream()
+        .anyMatch(new Predicate<Author>() {
+            @Override
+            public boolean test(Author author) {
+                return author.getAge() > 30;
+            }
+        });
+System.out.println(anyMatch);
+//lambda
+boolean anyMatch = authors.stream()
+        .anyMatch(author -> author.getAge() > 30);
+System.out.println(anyMatch);
+```
+
+##### allMatch
+可以用来判断是否都匹配条件，结果也是boolean类型，都符合则为true
+```java
+List<Author> authors = getAuthors();
+// 判断作家是否都是成年人
+boolean allMatch = authors.stream()
+        .allMatch(author -> author.getAge() >= 18);
+System.out.println(allMatch);
+```
+
+##### noneMatch
+是否都不符合，都不符合则为true
+```java
+List<Author> authors = getAuthors();
+// 判断作家年龄是否都没有超过100
+boolean noneMatch = authors.stream()
+        .noneMatch(author -> author.getAge() > 100);
+System.out.println(noneMatch);
+```
+
+##### findAny
+获取流中的任意一个元素，该方法无法保证获取的是流中的第一个元素，只是匹配到
+```java
+List<Author> authors = getAuthors();
+// 获取任意一个年龄大于18的作家，如果存在就输出名字
+Optional<Author> any = authors.stream()
+        .filter(author -> author.getAge() > 18)
+        .findAny();
+any.ifPresent(new Consumer<Author>() {
+    @Override
+    public void accept(Author author) {
+        System.out.println(author.getName());
+    }
+});
+// lambda
+any.ifPresent(author -> System.out.println(author.getName()));
+```
+##### findFirst
+获取流中的第一个元素
+```java
+List<Author> authors = getAuthors();
+// 获取年龄最小的姓名
+Optional<String> first = authors.stream()
+        .sorted(((o1, o2) -> o1.getAge() - o2.getAge()))
+        .map(author -> author.getName())
+        .findFirst();
+first.ifPresent(s -> System.out.println(s));
+```
+
+##### reduce 归并
+对流中的数据按照你制定的计算方式计算出一个结果(缩减操作)，并返回一个Optional描述归约值（如果有）
+reduce俩个参数内部计算方式如下：
+```java
+T result = identity;
+for(T element : this stream) {
+    result = accumulator.apply(result, element); // 执行具体数据操作
+}
+return result;
+```
+> identity就是通过方法传入的初始值
+
+```java
+List<Author> authors = getAuthors();
+// 使用 reduce获取所有作者年龄的和
+Integer sum = authors.stream()
+        .distinct()
+        .map(author -> author.getAge())
+        .reduce(0, new BinaryOperator<Integer>() {
+            @Override
+            public Integer apply(Integer integer, Integer integer2) {
+                return integer + integer2;
+            }
+        });
+System.out.println(sum);
+// lambda
+Integer sum1 = authors.stream()
+        .distinct()
+        .map(author -> author.getAge())
+        .reduce(0, (integer, integer2) -> integer + integer2);
+System.out.println(sum1);
+```
+
+```java
+List<Author> authors = getAuthors();
+// 使用 reduce求使用作家年龄最大值
+Integer max = authors.stream()
+        .map(author -> author.getAge())
+        .reduce(Integer.MIN_VALUE, new BinaryOperator<Integer>() {
+            @Override
+            public Integer apply(Integer result, Integer element) {
+                return result < element ? element : result;
+            }
+        });
+System.out.println(max);
+
+// 使用 reduce求使用作家年龄最小值
+Integer min = authors.stream()
+        .map(author -> author.getAge())
+        .reduce(Integer.MAX_VALUE, (result, element) -> result > element ? element : result);
+System.out.println(min);
+```
+reduce一个参数内部计算方式如下：
+```java
+boolean foundAny = false;
+T result = null;
+for (T element : this stream){
+    if (!foundAny) {
+        foundAny = true;
+        result = element;
+    } else
+        result = accumulator.apply(result, element);
+}
+return foundAny ? Optional.of(result) : Optional.empty();
+```
+> 其实就是把第一个参数作为初始化值
+```java
+// 一个参数的reduce()求使用作家年龄最小值
+Optional<Integer> minOptional = authors.stream()
+        .map(author -> author.getAge())
+        .reduce((result, element) -> result > element ? element : result);
+minOptional.ifPresent(age -> System.out.println(age));
+```
+> 还有一种三个方法的重载方法，后面还需要补充
+#### 2.3.4 常用方法说明
 - map:相当于对数据进行一个操作，可以自定义返回值等
 - distinct:可以去除流中的相同元素，注意（*该方法依赖的Object的equals方法来判断是否是相同对象，所以要重写equals方法，否则只有对象地址一样时才会被认为是重复*）
 - sorted:可以对流中的元素进行排序，传入空参时使用的是实体类的比较方法
@@ -238,9 +507,9 @@ authors.stream()
 - count:计算元素数量
 - min&max:返回的是option对象，这里和sorted一样，得指定比较规则
 - collect:把当前流转换成一个集合（list, set, map）
-    - Collectors.toList()
-    - Collectors.toSet()
-    - Collectors.toMap(key, value)
+  - Collectors.toList()
+  - Collectors.toSet()
+  - Collectors.toMap(key, value)
 - anyMatch:可以用来判断是否有任意符合匹配条件的元素，结果为boolean类型
 - allMatch:可以用来判断是否都匹配条件，结果也是boolean类型，都符合则为true
 - noneMatch:是否都不符合，都不符合则为true
@@ -256,21 +525,21 @@ authors.stream()
     // 还有一种三个方法的重载方法，后面还需要补充
   ```
 
-#### 2.3 参考资料
+### 2.4 参考资料
+[Java函数式编程](https://blog.csdn.net/cz_00001/article/details/126177193 "Java函数式编程")
 
-
-#### 2.5 注意事项
+### 2.5 注意事项
 - 惰性求值，如果没有终结操作是不会执行的
 - 流是一次性的，经过终结操作之后就不能再被使用
 - 不会影响元数据
 
 
-### 3.Optional
-#### 3.1 概述
+## 3.Optional
+### 3.1 概述
 很多情况下代码容易出现空指针异常，尤其对象的属性是另外一个对象的时候，
 判断十分麻烦，代码也会很臃肿，这种情况下Java 8 引入了optional来避免空指针异常，
 并且很多函数式编程也会用到API也都用到
-#### 3.2 使用
+### 3.2 使用
 1. 创建对象
 - optional就像是包装类，可以把我们的具体数据封装Optional对象内部，
   然后我们去使用它内部封装好的方法操作封装进去的数据就可以很好的避免空指针异常
@@ -304,8 +573,10 @@ authors.stream()
 6. 数据转换
 - Optional还提供map可以对数据进行转换，并且转换得到的数据还是Optional包装好的，保证安全使用
 
-### 5.函数式接口
-#### 5.1 概述
+## 5.函数式接口
+![image](https://img2023.cnblogs.com/blog/2514586/202212/2514586-20221201103704669-1986999278.png)
+
+### 5.1 概述
 1. 只有一个抽象方法的接口就是函数式接口
 2. JDK的函数式接口都加上了@FunctionalInterface注解进行标识，但是无论加不加该注解，只要接口中只有一个抽象方法，都是函数式接口
 3. 常见的函数式接口
@@ -318,12 +589,12 @@ authors.stream()
 - and ：我们在使用Predicate接口的时候可能需要进行判断条件的拼接，而and方法相当于使用&&来拼接两个判断条件
 - or
 
-### 6.方法引用
+## 6.方法引用
 - 我们在使用lambda时，如果方法体中只有一个方法的时候，包括构造方法，我们可以用方法引用进一步简化代码
-#### 6.1用法及基本格式
+### 6.1用法及基本格式
 - 方法体中只有一个方法时
 - 类名或者对象名::方法名
-#### 6.2语法了解
+### 6.2语法了解
 - 6.2.1 引用类静态方法 类名::方法名
   **使用前提：如果我们在重写方法的时候，方法体中只有一行代码，
   并且这行代码是调用了某个类的静态方法，并且我们把要重写的抽象方法中所有参数都按照顺序传入了这个静态方法中，
@@ -339,7 +610,7 @@ authors.stream()
 
 - 6.2.4 构造器引用 类名::new StringBuilder::new
 
-### 7.高级用法
+## 7.高级用法
 基本数据类型优化：很多stream方法由于都使用了泛型，所以涉及到的参数和返回值都是引用数据类型，即使我们操作的是
 整数小数，实际使用还是他们的包装类，JDK5中引入的自动装箱和自动拆箱让我们在使用对应的包装类时就好像使用基本数据类型一样方便，
 但是你一定要知道装箱拆箱也是需要一定的时间的，虽然这个时间消耗很小，但是在大量数据的不断重复的情况下，就不能忽视这个时间损耗了，

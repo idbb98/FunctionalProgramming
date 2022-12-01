@@ -24,32 +24,184 @@ public class TestStream {
 //        Stream<Map.Entry<String, Integer>> stream = entrySet.stream();
 //        stream.filter(entry -> entry.getValue() > 12)
 //                .forEach(entry -> System.out.println(entry.getKey() + "---" + entry.getValue()));
-
         List<Author> authors = getAuthors();
-        // 打印现有数据的所有分类，要求对分类去重，不能出现格式：哲学，爱情
-        authors.stream()
-                .flatMap(author -> {
-                    return author.getBookList().stream();
-                })
-                .distinct()         // 书籍去重
-                //"哲学，爱情" =》"哲学“ ”爱情"       数组创建流Arrays.stream()
-                .flatMap(new Function<Book, Stream<String>>() {
+// 使用 reduce求使用作家年龄最大值
+        Integer max = authors.stream()
+                .map(author -> author.getAge())
+                .reduce(Integer.MIN_VALUE, new BinaryOperator<Integer>() {
                     @Override
-                    public Stream<String> apply(Book book) {
-                        return Arrays.stream(book.getCategory().split(","));    // 数组创建流Arrays.stream()
+                    public Integer apply(Integer result, Integer element) {
+                        return result < element ? element : result;
                     }
-                })
-                .distinct()         // 分类去重
-                .forEach(category -> System.out.println(category));
+                });
+        System.out.println(max);
 
-        authors.stream()
-                .flatMap(author -> author.getBookList().stream())
-                .distinct()         // 书籍去重
-                //"哲学，爱情" =》"哲学“ ”爱情"       数组创建流Arrays.stream()
-                .flatMap(book -> Arrays.stream(book.getCategory().split(",")))
-                .distinct()         // 分类去重
-                .forEach(category -> System.out.println(category));
+// 使用 reduce求使用作家年龄最小值
+        Integer min = authors.stream()
+                .map(author -> author.getAge())
+                .reduce(Integer.MAX_VALUE, (result, element) -> result > element ? element : result);
+        System.out.println(min);
 
+// 一个参数的reduce()求使用作家年龄最小值
+Optional<Integer> minOptional = authors.stream()
+        .map(author -> author.getAge())
+        .reduce((result, element) -> result > element ? element : result);
+minOptional.ifPresent(age -> System.out.println(age));
+
+
+// 使用 reduce获取所有作者年龄的和
+//Integer sum = authors.stream()
+//        .distinct()
+//        .map(author -> author.getAge())
+//        .reduce(0, new BinaryOperator<Integer>() {
+//            @Override
+//            public Integer apply(Integer integer, Integer integer2) {
+//                return integer + integer2;
+//            }
+//        });
+//System.out.println(sum);
+//// lambda
+//Integer sum1 = authors.stream()
+//        .distinct()
+//        .map(author -> author.getAge())
+//        .reduce(0, (integer, integer2) -> integer + integer2);
+//System.out.println(sum1);
+
+
+// 获取年龄最小的姓名
+//Optional<String> first = authors.stream()
+//        .sorted(((o1, o2) -> o1.getAge() - o2.getAge()))
+//        .map(author -> author.getName())
+//        .findFirst();
+//first.ifPresent(s -> System.out.println(s));
+
+
+// 获取任意一个年龄大于18的作家，如果存在就输出名字
+//Optional<Author> any = authors.stream()
+//        .filter(author -> author.getAge() > 18)
+//        .findAny();
+//any.ifPresent(new Consumer<Author>() {
+//    @Override
+//    public void accept(Author author) {
+//        System.out.println(author.getName());
+//    }
+//});
+//// lambda
+//any.ifPresent(author -> System.out.println(author.getName()));
+
+// 判断作家年龄是否都没有超过100
+//boolean noneMatch = authors.stream()
+//        .noneMatch(author -> author.getAge() > 100);
+//System.out.println(noneMatch);
+
+
+// 判断作家是否都是成年人
+//boolean allMatch = authors.stream()
+//        .allMatch(author -> author.getAge() >= 18);
+//System.out.println(allMatch);
+
+//// 判断是否有年龄大于30的作家
+//boolean anyMatch = authors.stream()
+//        .anyMatch(author -> author.getAge() > 30);
+//System.out.println(anyMatch);
+
+
+// 获取一个 map集合，map集合的 key为作者名，value为 List<Book>
+//Map<String, List<Book>> map = authors.stream()
+//        .distinct() // 不去重，key有重复时报 IllegalStateException Duplicate key
+//        .collect(Collectors.toMap(new Function<Author, String>() {
+//            @Override
+//            public String apply(Author author) {
+//                return author.getName();
+//            }
+//        }, new Function<Author, List<Book>>() {
+//            @Override
+//            public List<Book> apply(Author author) {
+//                return author.getBookList();
+//            }
+//        }));
+//map.forEach((key,value) -> System.out.println("key:"+key+"  value:"+value));
+
+
+// 书名的set集合
+//Set<String> stringSet = authors.stream()
+//        .flatMap(author -> author.getBookList().stream())
+//        .map(book -> book.getName())
+//        .collect(Collectors.toSet());
+//System.out.println(stringSet);
+
+
+//// 获取存放作者名字的集合
+//List<String> nameList = authors.stream()
+//        .map(author -> author.getName())
+//        .collect(Collectors.toList());
+//System.out.println(nameList);
+
+// 打印作家的书籍最高分和最低分
+//// Stream<Author> -> Stream<Book> -> Stream<Double> -> 求值
+//Optional<Double> max = authors.stream()
+//        .flatMap(author -> author.getBookList().stream())
+//        .map(book -> book.getScore())
+//        .max(new Comparator<Double>() {
+//            @Override
+//            public int compare(Double o1, Double o2) {
+//                return (int) (o1 - o2);
+//            }
+//        });
+//System.out.println(max.get());
+//// lambda
+//Optional<Double> max1 = authors.stream()
+//        .flatMap(author -> author.getBookList().stream())
+//        .map(book -> book.getScore())
+//        .max((o1, o2) -> (int) (o1 - o2));
+//System.out.println(max1.get());
+////最低分
+//Optional<Double> min = authors.stream()
+//        .flatMap(author -> author.getBookList().stream())
+//        .map(book -> book.getScore())
+//        .min((o1, o2) -> (int) (o1 - o2));
+//System.out.println(min.get());
+
+
+// 打印作这些家所有书籍的数目，去重
+//long count = authors.stream()
+//        // 一位作家多本数据，（一对多）使用 flatMap
+//        .flatMap(author -> author.getBookList().stream())
+//        .distinct()
+//        .count();   // 返回long类型，需要接收
+//System.out.println(count);
+
+
+// 打印所有作家名字
+//        authors.stream()
+//                .map(author -> author.getName())
+//                .distinct()
+//                .forEach(name -> System.out.println(name));
+
+
+        // 打印现有数据的所有分类，要求对分类去重，不能出现格式：哲学，爱情
+//        authors.stream()
+//                .flatMap(author -> {
+//                    return author.getBookList().stream();
+//                })
+//                .distinct()         // 书籍去重
+//                //"哲学，爱情" =》"哲学“ ”爱情"       数组创建流Arrays.stream()
+//                .flatMap(new Function<Book, Stream<String>>() {
+//                    @Override
+//                    public Stream<String> apply(Book book) {
+//                        return Arrays.stream(book.getCategory().split(","));    // 数组创建流Arrays.stream()
+//                    }
+//                })
+//                .distinct()         // 分类去重
+//                .forEach(category -> System.out.println(category));
+//
+//        authors.stream()
+//                .flatMap(author -> author.getBookList().stream())
+//                .distinct()         // 书籍去重
+//                //"哲学，爱情" =》"哲学“ ”爱情"       数组创建流Arrays.stream()
+//                .flatMap(book -> Arrays.stream(book.getCategory().split(",")))
+//                .distinct()         // 分类去重
+//                .forEach(category -> System.out.println(category));
 
 
 //        // 打印书籍名字，去重
@@ -245,10 +397,7 @@ public class TestStream {
      * 同样求作者中的最小年龄
      */
     private static void test19() {
-        Optional<Integer> reduce = getAuthors().stream()
-                .distinct()
-                .map(author -> author.getAge())
-                .reduce((result, element) -> result < element ? result : element);
+        Optional<Integer> reduce = getAuthors().stream().distinct().map(author -> author.getAge()).reduce((result, element) -> result < element ? result : element);
         System.out.println("单个参数的reduce方法使用，作者中年龄最小的是：" + reduce.get());
     }
 
@@ -256,20 +405,15 @@ public class TestStream {
      * 使用reduce求所有作者中年龄的最大值 最小值  两个参数
      */
     private static void test18() {
-        Integer maxValue = getAuthors().stream()
-                .distinct()
-                .map(author -> author.getAge())
-                .reduce(Integer.MIN_VALUE, new BinaryOperator<Integer>() {
-                    @Override
-                    public Integer apply(Integer result, Integer element) {
-                        return result > element ? result : element;
-                    }
-                });
+        Integer maxValue = getAuthors().stream().distinct().map(author -> author.getAge()).reduce(Integer.MIN_VALUE, new BinaryOperator<Integer>() {
+            @Override
+            public Integer apply(Integer result, Integer element) {
+                return result > element ? result : element;
+            }
+        });
         System.out.println("利用reduce计算出来的作者年龄最大值是：" + maxValue);
 
-        Integer minValue = getAuthors().stream()
-                .distinct()
-                .map(author -> author.getAge())
+        Integer minValue = getAuthors().stream().distinct().map(author -> author.getAge())
                 // 这个Integer.MAX_VALUE就是result的初始赋值吧
                 .reduce(Integer.MAX_VALUE, (result, element) -> result > element ? element : result);
         System.out.println("利用reduce计算出来的作者年龄最小值是：" + minValue);
@@ -285,8 +429,7 @@ public class TestStream {
      * 使用reduce求所有作者的年龄和
      */
     private static void test17() {
-        Integer reduce = getAuthors().stream()
-                .map(author -> author.getAge())
+        Integer reduce = getAuthors().stream().map(author -> author.getAge())
                 // .reduce(0, (result, element) -> result + element)
                 .reduce(0, new BinaryOperator<Integer>() {
                     @Override
@@ -302,8 +445,7 @@ public class TestStream {
      * findFirst 获取一个年龄最小的作家，并输出他的名字
      */
     private static void test16() {
-        Optional<Author> first = getAuthors().stream().sorted((o1, o2) -> (o1.getAge() - o2.getAge()))
-                .findFirst();
+        Optional<Author> first = getAuthors().stream().sorted((o1, o2) -> (o1.getAge() - o2.getAge())).findFirst();
         System.out.println("年龄最小的一个作家：" + first.get().getName());
     }
 
@@ -311,10 +453,7 @@ public class TestStream {
      * findAny 获取任意一个年龄大于18的作家，如果存在就输出他的名字
      */
     private static void test15() {
-        Optional<Author> any = getAuthors().stream()
-                .distinct()
-                .filter(author -> author.getAge() > 18)
-                .findAny();
+        Optional<Author> any = getAuthors().stream().distinct().filter(author -> author.getAge() > 18).findAny();
         // any是一个对象，任意匹配到的一个对象
         System.out.println("任意一个大于18岁作家的名字：" + any.get().getName());
         System.out.println("我比较好奇的是，好像每次输出的都是同一个对象值");
@@ -324,8 +463,7 @@ public class TestStream {
      * noneMatch 全都不符合
      */
     private static void test14() {
-        boolean noneMatch = getAuthors().stream()
-                .noneMatch(author -> author.getAge() > 60);
+        boolean noneMatch = getAuthors().stream().noneMatch(author -> author.getAge() > 60);
         System.out.println("所有作家都是退休的了:" + (noneMatch ? "是" : "否"));
     }
 
@@ -333,8 +471,7 @@ public class TestStream {
      * allMatch 判断所有作家都是成年人
      */
     private static void test13() {
-        boolean allMatch = getAuthors().stream()
-                .allMatch(author -> author.getAge() > 18);
+        boolean allMatch = getAuthors().stream().allMatch(author -> author.getAge() > 18);
         System.out.println("所有作家都是成年人:" + (allMatch ? "是" : "否"));
     }
 
@@ -342,8 +479,7 @@ public class TestStream {
      * anyMatch 判断是否有年龄在29以上的作家
      */
     private static void test12() {
-        boolean anyMatch = getAuthors().stream()
-                .anyMatch(author -> author.getAge() > 29);
+        boolean anyMatch = getAuthors().stream().anyMatch(author -> author.getAge() > 29);
         System.out.println("是否有年龄在29以上的作家:" + (anyMatch ? "是" : "否"));
     }
 
@@ -352,32 +488,25 @@ public class TestStream {
      */
     private static void test11() {
         System.out.println("转换成list集合");
-        List<Book> bookList = getAuthors().stream().flatMap(author -> author.getBookList().stream())
-                .collect(Collectors.toList());
+        List<Book> bookList = getAuthors().stream().flatMap(author -> author.getBookList().stream()).collect(Collectors.toList());
         for (Book book : bookList) {
             System.out.println(book.toString());
         }
 
         System.out.println("转换成set");
-        Set<Book> bookSet = getAuthors().stream()
-                .flatMap(author -> author.getBookList().stream())
-                .collect(Collectors.toSet());
+        Set<Book> bookSet = getAuthors().stream().flatMap(author -> author.getBookList().stream()).collect(Collectors.toSet());
         for (Book book : bookSet) {
             System.out.println(book.toString());
         }
 
         System.out.println("转换成map");
-        Map<String, Book> map = getAuthors().stream()
-                .flatMap(author -> author.getBookList().stream())
-                .distinct()
-                .collect(Collectors.toMap(book -> book.getName(), book -> book)); // 第一个是key,第二个是value
-        map.entrySet().stream()
-                .forEach(new Consumer<Map.Entry<String, Book>>() {
-                    @Override
-                    public void accept(Map.Entry<String, Book> stringBookEntry) {
-                        System.out.println(stringBookEntry.getKey() + ":" + stringBookEntry.getValue());
-                    }
-                });
+        Map<String, Book> map = getAuthors().stream().flatMap(author -> author.getBookList().stream()).distinct().collect(Collectors.toMap(book -> book.getName(), book -> book)); // 第一个是key,第二个是value
+        map.entrySet().stream().forEach(new Consumer<Map.Entry<String, Book>>() {
+            @Override
+            public void accept(Map.Entry<String, Book> stringBookEntry) {
+                System.out.println(stringBookEntry.getKey() + ":" + stringBookEntry.getValue());
+            }
+        });
 
         System.out.println("list的大小是：" + bookList.size());
         System.out.println("set的大小是：" + bookSet.size());
@@ -388,22 +517,16 @@ public class TestStream {
      * 分别获取这些作家的所出书籍的最高分和最低分并打印
      */
     private static void test10() {
-        Optional<Double> max = getAuthors().stream().distinct().flatMap(author -> author.getBookList().stream())
-                .map(book -> book.getScore())
-                .max(new Comparator<Double>() {
-                    @Override
-                    public int compare(Double o1, Double o2) {
-                        return (int) (o1 - o2);
-                    }
-                });
+        Optional<Double> max = getAuthors().stream().distinct().flatMap(author -> author.getBookList().stream()).map(book -> book.getScore()).max(new Comparator<Double>() {
+            @Override
+            public int compare(Double o1, Double o2) {
+                return (int) (o1 - o2);
+            }
+        });
         System.out.println(" 所有作家书籍中分数最高的是： " + max.get());
 
 
-        Optional<Double> min = getAuthors().stream()
-                .flatMap(author -> author.getBookList().stream())
-                .map(book -> book.getScore())
-                .distinct()
-                .min((s1, s2) -> (int) (s1 - s2));
+        Optional<Double> min = getAuthors().stream().flatMap(author -> author.getBookList().stream()).map(book -> book.getScore()).distinct().min((s1, s2) -> (int) (s1 - s2));
         System.out.println(" 所有作家书籍中分数最低的是： " + min.get());
 
 
@@ -414,9 +537,7 @@ public class TestStream {
      */
     private static void test9() {
         System.out.println("flatmap again");
-        getAuthors().stream().flatMap(author -> author.getBookList().stream())
-                .flatMap(book -> Arrays.stream(book.getCategory().split(",")))
-                .distinct().forEach(System.out::println);
+        getAuthors().stream().flatMap(author -> author.getBookList().stream()).flatMap(book -> Arrays.stream(book.getCategory().split(","))).distinct().forEach(System.out::println);
     }
 
     /**
@@ -424,14 +545,12 @@ public class TestStream {
      */
     private static void test8() {
         System.out.println("test flatMap");
-        getAuthors().stream()
-                .flatMap(new Function<Author, Stream<Book>>() {
+        getAuthors().stream().flatMap(new Function<Author, Stream<Book>>() {
                     @Override
                     public Stream<Book> apply(Author author) {
                         return author.getBookList().stream();
                     }
-                })
-                .distinct() // 去掉相同的书籍
+                }).distinct() // 去掉相同的书籍
                 .forEach(book -> System.out.println(book.getName()));
     }
 
@@ -503,8 +622,7 @@ public class TestStream {
     // 对流中的元素按照年龄进行降序排序，并且要求不能有重复元素
     private static void test1() {
         List<Author> authors = getAuthors();
-        authors.stream()
-                .distinct()
+        authors.stream().distinct()
                 //.map(author -> author.getAge()) // 这个是比较年龄
                 .sorted() // 可以注释这一行看看什么情况
                 .forEach(author -> System.out.println(author.getAge()));
