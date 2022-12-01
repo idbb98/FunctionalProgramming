@@ -22,7 +22,7 @@
 集合对象.stream()
 ```java
 List<Author> authors = getAuthors();
-Stream<Author> stream = authors.stream();
+        Stream<Author> stream = authors.stream();
 ```
 ##### 数组:
 Arrays.stream(arr) / Stream.of(arr)
@@ -531,7 +531,9 @@ minOptional.ifPresent(age -> System.out.println(age));
 ### 2.5 注意事项
 - 惰性求值，如果没有终结操作是不会执行的
 - 流是一次性的，经过终结操作之后就不能再被使用
-- 不会影响元数据
+- 不会影响元数据(正常情况下)
+  非正常情况下：(一般不会这样写)
+  ![image](https://img2023.cnblogs.com/blog/2514586/202212/2514586-20221201212758053-1120303190.png)
 
 
 ## 3.Optional
