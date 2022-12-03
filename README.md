@@ -536,7 +536,7 @@ minOptional.ifPresent(age -> System.out.println(age));
   ![image](https://img2023.cnblogs.com/blog/2514586/202212/2514586-20221201212758053-1120303190.png)
 
 
-## 3.Optional
+## 3.Optional	TestOptional.java
 ### 3.1 概述
 很多情况下代码容易出现空指针异常，尤其对象的属性是另外一个对象的时候，
 判断十分麻烦，代码也会很臃肿，这种情况下Java 8 引入了optional来避免空指针异常，
@@ -561,7 +561,43 @@ minOptional.ifPresent(age -> System.out.println(age));
 
 3.1 安全获取值
 - orElseGet:获取数据并且设置数据为空时的默认值，如果数据不为空就获取该数据，为空则获取默认值
-- orElseThrow
+```java
+ @Test
+    public void test03(){
+        Optional<Author> authorOptional1 = getAuthorOptional();
+
+        Author author = authorOptional1.orElseGet(new Supplier<Author>() {
+            @Override
+            public Author get() {
+                // 设置如果 authorOptional1为对象 null,返回的默认对象
+                return new Author(1L, "default", "my introduction 1", 18, null);
+            }
+        });
+
+        // lambda
+//        Author author = authorOptional1.orElseGet(() -> {
+//            // 设置如果 authorOptional1为对象 null,返回的默认对象
+//            return new Author(1L, "default", "my introduction 1", 18, null);
+//        });
+        System.out.println(author.getName());
+    }
+```
+- orElseThrow:获取数据，如果为空根据传入的参数创建异常抛出
+```java
+    @Test
+    public void test04() throws Throwable {
+        Optional<Author> authorOptional = getAuthorOptional();
+        Author author = authorOptional.orElseThrow(new Supplier<Throwable>() {
+            @Override
+            public Throwable get() {
+                return new RuntimeException("数据为null");
+            }
+        });
+        System.out.println(author);
+
+    }
+```
+
 
 4. 过滤
 - 我们可以使用filter方法对数据进行过滤，如果原来是有数据的，但是不符合判断，也会变成一个无数据的Optional对象
@@ -574,11 +610,20 @@ minOptional.ifPresent(age -> System.out.println(age));
 
 6. 数据转换
 - Optional还提供map可以对数据进行转换，并且转换得到的数据还是Optional包装好的，保证安全使用
+```java
+    @Test
+    public void test07() {
+        Optional<Author> authorOptional = getAuthorOptional();
+        authorOptional.map(author -> author.getBookList())
+                .ifPresent(books -> System.out.println(books));
 
-## 5.函数式接口
+    }
+```
+
+## 4.函数式接口
 ![image](https://img2023.cnblogs.com/blog/2514586/202212/2514586-20221201103704669-1986999278.png)
 
-### 5.1 概述
+### 4.1 概述
 1. 只有一个抽象方法的接口就是函数式接口
 2. JDK的函数式接口都加上了@FunctionalInterface注解进行标识，但是无论加不加该注解，只要接口中只有一个抽象方法，都是函数式接口
 3. 常见的函数式接口
@@ -591,12 +636,12 @@ minOptional.ifPresent(age -> System.out.println(age));
 - and ：我们在使用Predicate接口的时候可能需要进行判断条件的拼接，而and方法相当于使用&&来拼接两个判断条件
 - or
 
-## 6.方法引用
+## 5.方法引用
 - 我们在使用lambda时，如果方法体中只有一个方法的时候，包括构造方法，我们可以用方法引用进一步简化代码
-### 6.1用法及基本格式
+### 5.1用法及基本格式
 - 方法体中只有一个方法时
 - 类名或者对象名::方法名
-### 6.2语法了解
+### 5.2语法了解
 - 6.2.1 引用类静态方法 类名::方法名
   **使用前提：如果我们在重写方法的时候，方法体中只有一行代码，
   并且这行代码是调用了某个类的静态方法，并且我们把要重写的抽象方法中所有参数都按照顺序传入了这个静态方法中，
@@ -612,7 +657,7 @@ minOptional.ifPresent(age -> System.out.println(age));
 
 - 6.2.4 构造器引用 类名::new StringBuilder::new
 
-## 7.高级用法
+## 6.高级用法
 基本数据类型优化：很多stream方法由于都使用了泛型，所以涉及到的参数和返回值都是引用数据类型，即使我们操作的是
 整数小数，实际使用还是他们的包装类，JDK5中引入的自动装箱和自动拆箱让我们在使用对应的包装类时就好像使用基本数据类型一样方便，
 但是你一定要知道装箱拆箱也是需要一定的时间的，虽然这个时间消耗很小，但是在大量数据的不断重复的情况下，就不能忽视这个时间损耗了，
@@ -620,6 +665,6 @@ stream对这块内容进行了优化，提供很多针对基本数据类型的�
 例如：mapToInt,mapToLong,mapToDouble,flatMapToInt....
 比如前面我们用的map()，返回的是Stream<Integer>，如果你用.mapToInt()，最后返回的就是int值
 
-### 8.并行流
+## 8.并行流
 当流中有大量元素时，我们可以使用并行流去提高操作的效率，其实并行流就是把任务分配给多个线程去完成，如果我们自己去用代码取实现的话
 其实会非常复杂，并且要求你对并发编程有足够的理解和认识，而且如果我们使用stream的话，我们只需要修改一个方法的调用就可以使用并行流来帮我们实现，从而提高效率
