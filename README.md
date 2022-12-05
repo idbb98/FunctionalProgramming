@@ -536,7 +536,8 @@ minOptional.ifPresent(age -> System.out.println(age));
   ![image](https://img2023.cnblogs.com/blog/2514586/202212/2514586-20221201212758053-1120303190.png)
 
 
-## 3.Optional	TestOptional.java
+## 3.Optional
+TestOptional.java
 ### 3.1 概述
 很多情况下代码容易出现空指针异常，尤其对象的属性是另外一个对象的时候，
 判断十分麻烦，代码也会很臃肿，这种情况下Java 8 引入了optional来避免空指针异常，
@@ -624,7 +625,7 @@ minOptional.ifPresent(age -> System.out.println(age));
 ![image](https://img2023.cnblogs.com/blog/2514586/202212/2514586-20221201103704669-1986999278.png)
 
 ### 4.1 概述
-1. 只有一个抽象方法的接口就是函数式接口
+1. **只有一个抽象方法的接口**就是函数式接口
 2. JDK的函数式接口都加上了@FunctionalInterface注解进行标识，但是无论加不加该注解，只要接口中只有一个抽象方法，都是函数式接口
 3. 常见的函数式接口
 - Consumer 消费接口：可以对传入的参数进行消费
@@ -664,7 +665,51 @@ minOptional.ifPresent(age -> System.out.println(age));
 stream对这块内容进行了优化，提供很多针对基本数据类型的方法。
 例如：mapToInt,mapToLong,mapToDouble,flatMapToInt....
 比如前面我们用的map()，返回的是Stream<Integer>，如果你用.mapToInt()，最后返回的就是int值
+```java
+List<Author> authors = getAuthors();
+authors.stream()
+        .map(Author::getAge)
+        .map(age -> age + 10)
+        .filter(age -> age > 8)
+        .map(age -> age - 10)
+        .forEach(System.out::println);
 
-## 8.并行流
+authors.stream()
+        .mapToInt(Author::getAge)
+        .map(age -> age +10)
+        .map(age -> age - 10)
+        .forEach(System.out::println);
+
+```
+
+## 7.并行流
 当流中有大量元素时，我们可以使用并行流去提高操作的效率，其实并行流就是把任务分配给多个线程去完成，如果我们自己去用代码取实现的话
 其实会非常复杂，并且要求你对并发编程有足够的理解和认识，而且如果我们使用stream的话，我们只需要修改一个方法的调用就可以使用并行流来帮我们实现，从而提高效率
+
+```java
+public static void main(String[] args) {
+	Stream<Integer> stream = Stream.of(1, 2, 3, 4, 5, 6, 7, 8, 9);
+	Integer sum = stream
+			.parallel()// 返回并行的等效流
+			.peek(new Consumer<Integer>() {     // 此方法主要是为了支持调试，您希望在元素流过管道中的某个点时查看它们
+				@Override
+				public void accept(Integer integer) {
+					System.out.println(integer+Thread.currentThread().getName());
+				}
+			})
+			.filter(num -> num > 5)
+			.reduce((result, element) -> result + element)
+			.get();
+	System.out.println(sum);
+}
+```
+也可以通过parallelStream直接获取并行流
+```java
+List<Author> authors = getAuthors();
+authors.parallelStream()
+        .map(Author::getAge)
+        .map(age -> age + 10)
+        .filter(age -> age > 8)
+        .map(age -> age - 10)
+        .forEach(System.out::println);
+```

@@ -1,17 +1,29 @@
 package org.example;
 
 
+import javax.tools.Tool;
 import java.util.*;
-import java.util.function.BinaryOperator;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 //@SuppressWarnings("ALL")
 public class TestStream {
     public static void main(String[] args) {
+//        Stream<Integer> stream = Stream.of(1, 2, 3, 4, 5, 6, 7, 8, 9);
+//        Integer sum = stream
+//                .parallel()// 返回并行的等效流
+//                .peek(new Consumer<Integer>() {     // 此方法主要是为了支持调试，您希望在元素流过管道中的某个点时查看它们
+//                    @Override
+//                    public void accept(Integer integer) {
+//                        System.out.println(integer + Thread.currentThread().getName());
+//                    }
+//                })
+//                .filter(num -> num > 5)
+//                .reduce((result, element) -> result + element)
+//                .get();
+//        System.out.println(sum);
+
         /**
          * 1. 创建流
          * 2. 中间操作
@@ -24,29 +36,47 @@ public class TestStream {
 //        Stream<Map.Entry<String, Integer>> stream = entrySet.stream();
 //        stream.filter(entry -> entry.getValue() > 12)
 //                .forEach(entry -> System.out.println(entry.getKey() + "---" + entry.getValue()));
-        List<Author> authors = getAuthors();
+List<Author> authors = getAuthors();
+authors.parallelStream()
+        .map(Author::getAge)
+        .map(age -> age + 10)
+        .filter(age -> age > 8)
+        .map(age -> age - 10)
+        .forEach(System.out::println);
+//
+//        authors.stream()
+//                .mapToInt(Author::getAge)
+//                .map(age -> age + 10)
+//                .map(age -> age - 10)
+//                .forEach(System.out::println);
+
+//        authors.stream()
+//                .filter(author -> author.getAge() > 18 && author.getName().length() > 1)
+//                .forEach(System.out::println);
+
+
 // 使用 reduce求使用作家年龄最大值
-        Integer max = authors.stream()
-                .map(author -> author.getAge())
-                .reduce(Integer.MIN_VALUE, new BinaryOperator<Integer>() {
-                    @Override
-                    public Integer apply(Integer result, Integer element) {
-                        return result < element ? element : result;
-                    }
-                });
-        System.out.println(max);
+//        Integer max = authors.stream()
+//                .map(author -> author.getAge())
+//                .reduce(Integer.MIN_VALUE, new BinaryOperator<Integer>() {
+//                    @Override
+//                    public Integer apply(Integer result, Integer element) {
+//                        return result < element ? element : result;
+//                    }
+//                });
+//        System.out.println(max);
 
 // 使用 reduce求使用作家年龄最小值
-        Integer min = authors.stream()
-                .map(author -> author.getAge())
-                .reduce(Integer.MAX_VALUE, (result, element) -> result > element ? element : result);
-        System.out.println(min);
+//        Integer min = authors.stream()
+//                .map(author -> author.getAge())
+//                .reduce(Integer.MAX_VALUE, (result, element) -> result > element ? element : result);
+//        System.out.println(min);
 
 // 一个参数的reduce()求使用作家年龄最小值
-Optional<Integer> minOptional = authors.stream()
-        .map(author -> author.getAge())
-        .reduce((result, element) -> result > element ? element : result);
-minOptional.ifPresent(age -> System.out.println(age));
+//        Optional<Integer> minOptional = authors.stream()
+//                .map(author -> author.getAge())
+//                .reduce((result, element) -> result > element ? element : result);
+//        minOptional.ifPresent(age -> System.out.println(age));
 
 
 // 使用 reduce获取所有作者年龄的和
@@ -670,6 +700,10 @@ minOptional.ifPresent(age -> System.out.println(age));
         author5.setBookList(books2);
 
         return new ArrayList<>(Arrays.asList(author1, author2, author3, author4, author5));
+    }
+
+    private static void accept(Author author) {
+        System.out.println(author.getName());
     }
 
 //    private static void test() {
